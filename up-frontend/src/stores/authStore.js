@@ -1,38 +1,46 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-
-const ADMIN_EMAIL = "admin@up.local";
+import { api, setToken, clearToken, getToken } from "../api/http";
 
 export const useAuthStore = create(
   persist(
     (set, get) => ({
-      user: null, // { email, role }
+      user: null, // on ne peut pas récupérer le user sans /me
+      token: getToken() || null,
 
-      login(email, password) {
-        const e = String(email || "")
-          .trim()
-          .toLowerCase();
-        const p = String(password || "");
-        if (!e || !p)
-          return { ok: false, error: "Email et mot de passe requis." };
-
-        const role = e === ADMIN_EMAIL ? "admin" : "customer";
-        set({ user: { email: e, role } });
-        return { ok: true };
+      async login(username, password) {
+        try {
+          const data = await api("/login", {
+            method: "POST",
+            body: { username, password },
+          });
+          setToken(data.access_token);
+          set({ token: data.access_token, user: { username } });
+          return { ok: true };
+        } catch (e) {
+          return { ok: false, error: e.message };
+        }
       },
 
-      register(email, password) {
-        return get().login(email, password);
+      async register(username, email, password) {
+        try {
+          const data = await api("/register", {
+            method: "POST",
+            body: { username, email, password },
+          });
+          setToken(data.access_token);
+          set({ token: data.access_token, user: { username, email } });
+          return { ok: true };
+        } catch (e) {
+          return { ok: false, error: e.message };
+        }
       },
 
       logout() {
-        set({ user: null });
-      },
-
-      isAdmin() {
-        return get().user?.role === "admin";
+        clearToken();
+        set({ user: null, token: null });
       },
     }),
-    { name: "up_auth_full" }
-  )
+    { name: "up-auth" },
+  ),
 );
