@@ -1,7 +1,10 @@
+from typing import Optional
+
+
 class Product:
     def __init__(
         self,
-        id: str | None,
+        id: Optional[str],
         slug: str,
         name: str,
         category: str,
@@ -11,7 +14,7 @@ class Product:
         stock_quantity: int,
         featured: bool,
     ):
-        self.id = id
+        self.id = id or None
         self.slug = slug
         self.name = name
         self.category = category

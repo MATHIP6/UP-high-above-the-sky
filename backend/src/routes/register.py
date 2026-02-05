@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Response
 from pydantic import BaseModel
 
 from src.core import security
@@ -16,11 +16,13 @@ router = APIRouter()
 
 
 @router.post("/register")
-async def register(form: RegisterForm):
+async def register(form: RegisterForm, response: Response):
     user = users.get_user_by_name(form.username)
     if user:
         raise HTTPException(status_code=400, detail="Username alreay exist")
     users.create_user(form.username, form.email, form.password)
     user = users.get_user_by_name(form.username)
     token = security.create_token({"sub": user.id})
-    return security.Token(access_token=token, token_type="bearer")
+    res_token = security.TokenResponse(access_token=token, token_type="bearer")
+    response.set_cookie("access_token", token)
+    return res_token

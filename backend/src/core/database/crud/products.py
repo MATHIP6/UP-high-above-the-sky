@@ -1,4 +1,7 @@
+from typing import Annotated
+from fastapi import Cookie
 from src.core.database.db import connection
+from src.core.security import get_current_user, is_admin
 from src.models.product import Product
 import logging
 
@@ -57,6 +60,18 @@ def get(product_id):
         return Product(*result)
     else:
         return None
+
+
+def is_exist(product_id):
+    cur = connection.cursor()
+    cur.execute(
+        """
+        SELECT id FROM products WHERE id = ?
+    """,
+        (product_id,),
+    )
+    result = cur.fetchone()
+    return result is not None
 
 
 def get_all() -> list[Product]:

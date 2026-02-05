@@ -40,7 +40,11 @@ def get_user(user_id: int) -> Optional[User]:
     row = query.fetchone()
     if row:
         return User(
-            id=row[0], username=row[1], email=row[2], password=row[3], role=row[4]
+            id=row[0],
+            username=row[1],
+            email=row[2],
+            password=row[3],
+            role=get_role_from_string(row[4]),
         )
     return None
 
