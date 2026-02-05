@@ -85,5 +85,5 @@ def delete_by_product(id: int):
 
 def clear_by_user(user_id: int):
     cur = connection.cursor()
-    cur.execute("DELETE * FROM carts WHERE user_id = ?;", (user_id,))
+    cur.execute("DELETE FROM carts WHERE user_id = ?;", (user_id,))
     connection.commit()
