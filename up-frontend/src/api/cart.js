@@ -1,11 +1,5 @@
 import { api } from "./http";
 
-// Server-side cart (optional):
-// - GET /carts
-// - POST /cart?product_id=...&quantity=...
-// - DELETE /cart/{product_id}
-// - DELETE /carts
-
 export const CartAPI = {
   list: () => api("/carts"),
 
