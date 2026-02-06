@@ -1,4 +1,4 @@
-from src.core.database.crud import products, promo_codes, users, carts
+from src.core.database.crud import orders, products, promo_codes, users, carts, orders
 
 
 def init():
@@ -6,4 +6,5 @@ def init():
     products.create_table()
     promo_codes.create_table()
     carts.create_table()
+    orders.create_table()
     print("Created all databases")
