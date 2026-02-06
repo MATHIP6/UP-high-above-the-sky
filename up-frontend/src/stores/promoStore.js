@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { SEED_PROMOS } from "../data/seed";
+import { PromosAPI } from "../api/promos";
 
 function seed(){ return SEED_PROMOS.map(p => ({ ...p, code: String(p.code).toUpperCase() })); }
 
@@ -8,6 +9,8 @@ export const usePromoStore = create(
   persist(
     (set, get) => ({
       promos: seed(),
+      lastValidate: null,
+      validateError: "",
 
       findActive(code){
         const c = String(code || "").trim().toUpperCase();
@@ -15,6 +18,20 @@ export const usePromoStore = create(
         const p = get().promos.find(x => x.code === c);
         if (!p || !p.active) return null;
         return p;
+      },
+
+      // Remote validation for checkout. If backend doesn't have it yet,
+      // it will fail and UI can fallback to local promos.
+      async validateRemote(code) {
+        set({ validateError: "" });
+        try {
+          const res = await PromosAPI.validate(code);
+          set({ lastValidate: res });
+          return { ok: true, res };
+        } catch (e) {
+          set({ validateError: e.message || "Erreur" });
+          return { ok: false, error: e.message };
+        }
       },
 
       upsert(promo){
