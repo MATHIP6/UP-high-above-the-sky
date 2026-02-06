@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { SEED_PRODUCTS } from "../data/seed";
 import { makeSlug } from "../lib/slug";
+import { ProductsAPI } from "../api/products";
 
 function loadSeed(){
   return SEED_PRODUCTS.map(p => ({ ...p }));
@@ -11,6 +12,44 @@ export const useProductStore = create(
   persist(
     (set, get) => ({
       products: loadSeed(),
+      loading: false,
+      error: "",
+      hydrated: false,
+
+      // Remote-first bootstrap. If backend has no products yet or route isn't available,
+      // we keep the local seed so the UI remains usable in dev.
+      async fetchProducts() {
+        set({ loading: true, error: "" });
+        try {
+          const raw = await ProductsAPI.list();
+          const list = Array.isArray(raw) ? raw : raw?.content || raw?.items || [];
+
+          // Map backend fields -> front fields (tolerant mapping)
+          const mapped = list.map((p) => ({
+            id: String(p.id ?? p.product_id ?? p._id ?? ""),
+            name: p.name ?? p.title ?? "",
+            slug: p.slug ?? makeSlug(p.name ?? p.title ?? ""),
+            category: p.category ?? p.theme ?? "caps",
+            description: p.description ?? "",
+            price: Number(p.price ?? 0),
+            images: Array.isArray(p.images)
+              ? p.images
+              : p.image
+                ? [p.image]
+                : [],
+            stockQty: Number(p.stockQty ?? p.stock_quantity ?? p.stock ?? 0),
+            featured: Boolean(p.featured ?? p.is_featured ?? false),
+            active: p.active ?? p.is_active ?? true,
+          }));
+
+          set({ products: mapped, hydrated: true, loading: false });
+          return { ok: true };
+        } catch (e) {
+          // Keep seed data; expose error for debugging.
+          set({ loading: false, error: e.message || "Erreur produits", hydrated: true });
+          return { ok: false, error: e.message };
+        }
+      },
 
       listPublic(){
         return get().products.filter(p => p.active);

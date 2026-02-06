@@ -3,7 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import SectionTitle from "../components/SectionTitle";
 import { useAuthStore } from "../stores/authStore";
 
-export default function LoginPage() {
+export default function LoginPage(){
   const navigate = useNavigate();
   const login = useAuthStore((s) => s.login);
   const register = useAuthStore((s) => s.register);
@@ -13,84 +13,50 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
 
-  async function submit() {
+    async function submit(){
     setError("");
-
     try {
-      let res;
-
       if (mode === "login") {
-        // backend attend: { username, password }
-        res = await login(email, password);
+        const res = await login(email, password);
+        if (!res.ok) return setError(res.error || "Erreur.");
       } else {
-        // backend attend: { username, email, password }
-        // on réutilise le champ "email" comme username + email pour l’instant
-        res = await register(email, email, password);
+        // Backend expects {username, email, password}. We reuse the same input for now.
+        const res = await register(email, email, password);
+        if (!res.ok) return setError(res.error || "Erreur.");
       }
-
-      if (!res.ok) return setError(res.error || "Erreur.");
       navigate("/account");
     } catch (e) {
       setError(e.message || "Erreur.");
     }
   }
 
+
   return (
     <div className="col" style={{ maxWidth: 620 }}>
       <SectionTitle
         title={mode === "login" ? "Connexion" : "Inscription"}
         subtitle="Client: email quelconque. Admin: admin@up.local"
-        right={
-          <Link className="btn" to="/account">
-            Compte
-          </Link>
-        }
+        right={<Link className="btn" to="/account">Compte</Link>}
       />
 
       <div className="glass card">
         <div className="row wrap">
-          <button
-            className={"btn " + (mode === "login" ? "primary" : "")}
-            onClick={() => setMode("login")}
-          >
-            Connexion
-          </button>
-          <button
-            className={"btn " + (mode === "register" ? "primary" : "")}
-            onClick={() => setMode("register")}
-          >
-            Inscription
-          </button>
+          <button className={"btn " + (mode === "login" ? "primary" : "")} onClick={() => setMode("login")}>Connexion</button>
+          <button className={"btn " + (mode === "register" ? "primary" : "")} onClick={() => setMode("register")}>Inscription</button>
         </div>
 
         <div className="col" style={{ marginTop: 12 }}>
           <div>
             <label>Email</label>
-            <input
-              className="input"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-            />
+            <input className="input" value={email} onChange={(e)=>setEmail(e.target.value)} />
           </div>
 
           <div>
             <label>Mot de passe</label>
-            <input
-              className="input"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
+            <input className="input" type="password" value={password} onChange={(e)=>setPassword(e.target.value)} />
           </div>
 
-          {error ? (
-            <div
-              className="glass card"
-              style={{ borderColor: "rgba(239,68,68,0.35)", color: "#991b1b" }}
-            >
-              {error}
-            </div>
-          ) : null}
+          {error ? <div className="glass card" style={{ borderColor: "rgba(239,68,68,0.35)", color:"#991b1b" }}>{error}</div> : null}
 
           <button className="btn primary" onClick={submit}>
             {mode === "login" ? "Se connecter" : "Créer un compte"}

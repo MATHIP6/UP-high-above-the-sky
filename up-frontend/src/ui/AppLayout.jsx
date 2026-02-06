@@ -1,12 +1,35 @@
+import { useEffect } from "react";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useCartStore } from "../stores/cartStore";
 import { useAuthStore } from "../stores/authStore";
+import { useProductStore } from "../stores/productStore";
 
 export default function AppLayout(){
   const navigate = useNavigate();
   const count = useCartStore((s) => s.items.reduce((sum,it)=>sum+it.qty,0));
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
+  const fetchProducts = useProductStore((s) => s.fetchProducts);
+  const productsHydrated = useProductStore((s) => s.hydrated);
+  const cartMode = useCartStore((s) => s.mode);
+  const syncFromServer = useCartStore((s) => s.syncFromServer);
+  const token = useAuthStore((s) => s.token);
+  const fetchMe = useAuthStore((s) => s.fetchMe);
+
+  useEffect(() => {
+    // Load products once at app start (remote-first, fallback to seed).
+    if (!productsHydrated) fetchProducts();
+  }, [fetchProducts, productsHydrated]);
+
+  useEffect(() => {
+    // If backend supports /me, load full user profile.
+    // Works for bearer tokens and for cookie sessions.
+    fetchMe();
+  }, [token, fetchMe]);
+
+  useEffect(() => {
+    if (cartMode === "server") syncFromServer();
+  }, [cartMode, token, syncFromServer]);
 
   return (
     <>
